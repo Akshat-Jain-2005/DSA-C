@@ -1,0 +1,165 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+// Function to add two matrices
+void addMatrix(int** A, int** B, int** result, int n) {
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            result[i][j] = A[i][j] + B[i][j];
+}
+
+// Function to subtract two matrices
+void subtractMatrix(int** A, int** B, int** result, int n) {
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            result[i][j] = A[i][j] - B[i][j];
+}
+
+// Function to multiply matrices using Strassen's algorithm
+void strassen(int** A, int** B, int** C, int n) {
+    if (n == 1) {
+        C[0][0] = A[0][0] * B[0][0];
+        return;
+    }
+
+    int newSize = n / 2;
+    int i, j;
+
+    // Allocate submatrices
+    int** A11 = (int**)malloc(newSize * sizeof(int*));
+    int** A12 = (int**)malloc(newSize * sizeof(int*));
+    int** A21 = (int**)malloc(newSize * sizeof(int*));
+    int** A22 = (int**)malloc(newSize * sizeof(int*));
+
+    int** B11 = (int**)malloc(newSize * sizeof(int*));
+    int** B12 = (int**)malloc(newSize * sizeof(int*));
+    int** B21 = (int**)malloc(newSize * sizeof(int*));
+    int** B22 = (int**)malloc(newSize * sizeof(int*));
+
+    for (i = 0; i < newSize; i++) {
+        A11[i] = (int*)malloc(newSize * sizeof(int));
+        A12[i] = (int*)malloc(newSize * sizeof(int));
+        A21[i] = (int*)malloc(newSize * sizeof(int));
+        A22[i] = (int*)malloc(newSize * sizeof(int));
+        B11[i] = (int*)malloc(newSize * sizeof(int));
+        B12[i] = (int*)malloc(newSize * sizeof(int));
+        B21[i] = (int*)malloc(newSize * sizeof(int));
+        B22[i] = (int*)malloc(newSize * sizeof(int));
+    }
+
+    // Divide matrices A and B into sub-matrices
+    for (i = 0; i < newSize; i++) {
+        for (j = 0; j < newSize; j++) {
+            A11[i][j] = A[i][j];
+            A12[i][j] = A[i][j + newSize];
+            A21[i][j] = A[i + newSize][j];
+            A22[i][j] = A[i + newSize][j + newSize];
+            B11[i][j] = B[i][j];
+            B12[i][j] = B[i][j + newSize];
+            B21[i][j] = B[i + newSize][j];
+            B22[i][j] = B[i + newSize][j + newSize];
+        }
+    }
+
+    // Calculate the 7 products using Strassen's formulas
+    int** M1 = (int**)malloc(newSize * sizeof(int*));
+    int** M2 = (int**)malloc(newSize * sizeof(int*));
+    int** M3 = (int**)malloc(newSize * sizeof(int*));
+    int** M4 = (int**)malloc(newSize * sizeof(int*));
+    int** M5 = (int**)malloc(newSize * sizeof(int*));
+    int** M6 = (int**)malloc(newSize * sizeof(int*));
+    int** M7 = (int**)malloc(newSize * sizeof(int*));
+
+    for (i = 0; i < newSize; i++) {
+        M1[i] = (int*)malloc(newSize * sizeof(int));
+        M2[i] = (int*)malloc(newSize * sizeof(int));
+        M3[i] = (int*)malloc(newSize * sizeof(int));
+        M4[i] = (int*)malloc(newSize * sizeof(int));
+        M5[i] = (int*)malloc(newSize * sizeof(int));
+        M6[i] = (int*)malloc(newSize * sizeof(int));
+        M7[i] = (int*)malloc(newSize * sizeof(int));
+    }
+
+    int** tempA = (int**)malloc(newSize * sizeof(int*));
+    int** tempB = (int**)malloc(newSize * sizeof(int*));
+    for (i = 0; i < newSize; i++) {
+        tempA[i] = (int*)malloc(newSize * sizeof(int));
+        tempB[i] = (int*)malloc(newSize * sizeof(int));
+    }
+
+    // Calculate P1 to P7
+    subtractMatrix(B12, B22, tempB, newSize);
+    strassen(A11, tempB, M1, newSize);
+
+    addMatrix(A11, A12, tempA, newSize);
+    strassen(tempA, B22, M2, newSize);
+
+    addMatrix(A21, A22, tempA, newSize);
+    strassen(tempA, B11, M3, newSize);
+
+    subtractMatrix(B21, B11, tempB, newSize);
+    strassen(A22, tempB, M4, newSize);
+
+    addMatrix(A11, A22, tempA, newSize);
+    addMatrix(B11, B22, tempB, newSize);
+    strassen(tempA, tempB, M5, newSize);
+
+    subtractMatrix(A12, A22, tempA, newSize);
+    addMatrix(B21, B22, tempB, newSize);
+    strassen(tempA, tempB, M6, newSize);
+
+    subtractMatrix(A11, A21, tempA, newSize);
+    addMatrix(B11, B12, tempB, newSize);
+    strassen(tempA, tempB, M7, newSize);
+
+    // Calculate the final quadrants of the result matrix C
+    addMatrix(M5, M4, tempA, newSize);
+    subtractMatrix(tempA, M2, C, newSize);
+    addMatrix(M1, M3, tempA, newSize);
+    addMatrix(tempA, M6, C, newSize);
+
+    for (i = 0; i < newSize; i++) {
+        free(M1[i]);
+        free(M2[i]);
+        free(M3[i]);
+        free(M4[i]);
+        free(M5[i]);
+        free(M6[i]);
+        free(M7[i]);
+        free(tempA[i]);
+        free(tempB[i]);
+    }
+    free(M1);
+    free(M2);
+    free(M3);
+    free(M4);
+    free(M5);
+    free(M6);
+    free(M7);
+    free(tempA);
+    free(tempB);
+}
+
+int main() {
+    int n = 4; // Size of the matrix (must be a power of 2)
+    int A[4][4] = {{1, 2, 3, 4},
+                   {5, 6, 7, 8},
+                   {9, 10, 11, 12},
+                   {13, 14, 15, 16}};
+    int B[4][4] = {{1, 0, 0, 0},
+                   {0, 1, 0, 0},
+                   {0, 0, 1, 0},
+                   {0, 0, 0, 1}};
+    int C[4][4];
+
+    strassen(A, B, C, n);
+
+    printf("Resultant Matrix C: \n");
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++)
+            printf("%d ", C[i][j]);
+        printf("\n");
+    }
+
+    return 0;
+}
