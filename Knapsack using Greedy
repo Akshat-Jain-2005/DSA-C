@@ -1,0 +1,73 @@
+#include <stdio.h>
+
+// Structure to hold item details
+typedef struct {
+    int weight;
+    int value;
+    double ratio;
+} Item;
+
+// Function to swap two items
+void swap(Item *a, Item *b) {
+    Item temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+// Function to sort items based on value/weight ratio (Descending order)
+void sortItems(Item items[], int n) {
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = 0; j < n - i - 1; j++) {
+            if (items[j].ratio < items[j + 1].ratio) {
+                swap(&items[j], &items[j + 1]);
+            }
+        }
+    }
+}
+
+// Function to solve the fractional knapsack problem
+double knapsack(Item items[], int n, int capacity) {
+    sortItems(items, n);  // Sort items based on value/weight ratio
+
+    double total_value = 0.0;  // To store the final maximum value
+    for (int i = 0; i < n; i++) {
+        if (capacity >= items[i].weight) {
+            // Take the whole item
+            total_value += items[i].value;
+            capacity -= items[i].weight;
+        } else {
+            // Take a fraction of the item
+            total_value += (items[i].value * ((double)capacity / items[i].weight));
+            break;  // Knapsack is full
+        }
+    }
+    return total_value;
+}
+
+int main() {
+    int n, capacity;
+
+    // Input number of items and knapsack capacity
+    printf("Enter number of items: ");
+    scanf("%d", &n);
+    printf("Enter knapsack capacity: ");
+    scanf("%d", &capacity);
+
+    Item items[n];
+    
+    // Input values and weights of items
+    printf("Enter weight and value of each item:\n");
+    for (int i = 0; i < n; i++) {
+        printf("Item %d (weight value): ", i + 1);
+        scanf("%d %d", &items[i].weight, &items[i].value);
+        items[i].ratio = (double)items[i].value / items[i].weight;  // Calculate value/weight ratio
+    }
+
+    // Compute the maximum possible value
+    double max_value = knapsack(items, n, capacity);
+
+    // Print the result
+    printf("Maximum value in knapsack = %.2lf\n", max_value);
+
+    return 0;
+}
