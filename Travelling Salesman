@@ -1,0 +1,50 @@
+#include <stdio.h>
+#include <limits.h>
+
+#define MAX 20
+#define INF 10000000
+
+int n; // number of cities
+int dist[MAX][MAX]; // distance matrix
+int dp[1 << MAX][MAX]; // memoization table
+
+int tsp(int mask, int pos) {
+    if (mask == (1 << n) - 1) {
+        return dist[pos][0]; // return to starting city
+    }
+
+    if (dp[mask][pos] != -1)
+        return dp[mask][pos];
+
+    int minCost = INF;
+
+    for (int city = 0; city < n; city++) {
+        if ((mask & (1 << city)) == 0) { // if city not visited
+            int newCost = dist[pos][city] + tsp(mask | (1 << city), city);
+            if (newCost < minCost)
+                minCost = newCost;
+        }
+    }
+
+    return dp[mask][pos] = minCost;
+}
+
+int main() {
+    printf("Enter number of cities: ");
+    scanf("%d", &n);
+
+    printf("Enter distance matrix (%d x %d):\n", n, n);
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            scanf("%d", &dist[i][j]);
+
+    // Initialize dp table
+    for (int i = 0; i < (1 << n); i++)
+        for (int j = 0; j < n; j++)
+            dp[i][j] = -1;
+
+    int result = tsp(1, 0); // Start from city 0, visited mask = 1 (only city 0 visited)
+    printf("Minimum cost to visit all cities: %d\n", result);
+
+    return 0;
+}
